@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Cờ Tướng Công Viên</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="bubbles"></div>
+
+<!-- ===== Màn hình tải ===== -->
+<section id="loading">
+  <div class="load-card">
+    <div class="emblem big"><span>帥</span></div>
+    <h1>Cờ Tướng <em>Công Viên</em></h1>
+    <p class="tagline">Chiều nào cũng có một ván, một ấm trà, và mấy ông "quân sư quạt mo".</p>
+    <div class="bar"><i id="load-bar"></i></div>
+    <p class="load-note" id="load-note">Đang dọn bàn cờ…</p>
+    <button id="btn-enter" class="btn btn-gold btn-lg" disabled>Vào bàn</button>
+    <p class="tip"><b>Mẹo:</b> Kéo chuột để xoay góc nhìn · Lăn chuột để phóng to · Bấm quân Đỏ để đi.</p>
+  </div>
+</section>
+
+<!-- ===== HUD ===== -->
+<div id="hud" hidden>
+  <header class="topbar">
+    <div class="brand">
+      <div class="emblem"><span>帥</span></div>
+      <div>
+        <div class="brand-name">Cờ Tướng Công Viên</div>
+        <div class="brand-sub">Bàn số 7 · Công viên Tao Đàn · Cờ chậm 10'</div>
+      </div>
+    </div>
+    <div id="turn-banner" class="turn-banner red">Lượt của bạn</div>
+    <div class="top-right">
+      <div class="pill"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span id="viewers">23</span> người xem</div>
+      <div class="pill coin"><i></i>12.500</div>
+      <button class="icon-btn" id="btn-sound" title="Âm thanh"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg></button>
+      <button class="icon-btn" title="Cài đặt"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
+    </div>
+  </header>
+
+  <!-- Thẻ người chơi -->
+  <div class="pcard black" id="card-b">
+    <div class="avatar" data-char="2"></div>
+    <div class="pinfo">
+      <div class="pname">Bác Tư Mũ Nồi <span class="side-tag">Đen</span></div>
+      <div class="pmeta">Cấp 31 · Elo 1712 · <span class="status">Đang chờ</span></div>
+      <div class="captured" id="cap-b"></div>
+    </div>
+    <div class="timer" id="timer-b">10:00</div>
+  </div>
+
+  <div class="pcard red me" id="card-r">
+    <div class="avatar" data-char="1"></div>
+    <div class="pinfo">
+      <div class="pname">Ông Ba Râu <span class="you">Bạn</span> <span class="side-tag">Đỏ</span></div>
+      <div class="pmeta">Cấp 27 · Elo 1650 · <span class="status">Đến lượt</span></div>
+      <div class="captured" id="cap-r"></div>
+    </div>
+    <div class="timer" id="timer-r">10:00</div>
+  </div>
+
+  <!-- Bảng bên phải -->
+  <aside class="side-panel" id="side-panel">
+    <section class="advice-box">
+      <h4 id="advice-title">Quân sư mách nước</h4>
+      <ul class="advice" id="advice"><li class="empty">Chờ vào bàn…</li></ul>
+    </section>
+    <div class="panel-tabs">
+      <button class="tab active" data-tab="moves">Biên bản</button>
+      <button class="tab" data-tab="chat">Trò chuyện <b id="chat-badge" hidden>•</b></button>
+      <button class="tab" data-tab="crowd">Khán giả</button>
+    </div>
+    <div class="tab-body" data-body="moves">
+      <ol class="moves" id="moves"><li class="empty">Chưa có nước đi. Đỏ đi trước.</li></ol>
+    </div>
+    <div class="tab-body" data-body="chat" hidden>
+      <div class="chat-log" id="chat-log"></div>
+      <form class="chat-form" id="chat-form">
+        <input id="chat-input" maxlength="60" placeholder="Nói gì đó với bàn cờ…" autocomplete="off">
+        <button class="btn btn-jade btn-sm">Gửi</button>
+      </form>
+    </div>
+    <div class="tab-body" data-body="crowd" hidden>
+      <ul class="crowd" id="crowd"></ul>
+    </div>
+  </aside>
+  <button class="icon-btn panel-toggle" id="btn-panel" title="Biên bản & trò chuyện"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+
+  <!-- Thanh hành động -->
+  <nav class="action-bar">
+    <div class="emotes">
+      <button data-emote="👍">👍</button><button data-emote="😂">😂</button><button data-emote="😮">😮</button><button data-emote="🍵">🍵</button>
+    </div>
+    <div class="actions">
+      <button class="btn btn-wood" id="btn-hint"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/></svg>Gợi ý <small id="hint-left">3</small></button>
+      <button class="btn btn-wood" id="btn-undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Đi lại</button>
+      <button class="btn btn-wood" id="btn-draw"><svg viewBox="0 0 24 24"><path d="M7 11V7a5 5 0 0 1 10 0v4"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg>Cầu hòa</button>
+      <button class="btn btn-red" id="btn-resign"><svg viewBox="0 0 24 24"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg>Xin thua</button>
+      <button class="btn btn-jade" id="btn-view"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg><span id="view-name">Góc người chơi</span></button>
+    </div>
+  </nav>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<!-- Hộp kết quả -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <div class="result-ribbon" id="result-title">THẮNG!</div>
+    <div class="result-avatars">
+      <div class="avatar xl" id="result-avatar" data-char="1"></div>
+    </div>
+    <p id="result-text">Bác Tư đã bị chiếu bí.</p>
+    <div class="result-stats">
+      <div><b id="stat-moves">0</b><span>Nước đi</span></div>
+      <div><b id="stat-caps">0</b><span>Quân ăn được</span></div>
+      <div><b class="gold" id="stat-coins">+120</b><span>Xu thưởng</span></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-wood" id="btn-review">Xem lại bàn</button>
+      <button class="btn btn-gold" id="btn-new">Ván mới</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="confirm" hidden>
+  <div class="modal-card small">
+    <h3>Xin thua ván này?</h3>
+    <p>Mấy ông ngồi xem sẽ bàn tán cả buổi chiều đó nha.</p>
+    <div class="modal-actions">
+      <button class="btn btn-wood" id="btn-cancel">Chơi tiếp</button>
+      <button class="btn btn-red" id="btn-confirm-resign">Xin thua</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

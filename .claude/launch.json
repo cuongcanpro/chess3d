@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chess-park",
+      "runtimeExecutable": "py",
+      "runtimeArgs": ["-3", "D:/Claude/Chess/game/serve.py", "8780"],
+      "port": 8780
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rig Viewer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #222; color: #ddd; font: 12px system-ui, sans-serif; overflow: hidden; }
+  #bar { position: absolute; left: 8px; top: 8px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 16px); }
+  #bar button, #bar select { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid #555; background: #333; color: #eee; cursor: pointer; }
+  #bar button:hover { background: #444; }
+  canvas { display: block; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="bar"></div>
+<script type="module">
+// Xem thử model đã rig (oldman/rigged/*.glb) với các cử chỉ của rig.js.
+// ?m=oldMan1..5 · mục tiêu chỉ tay là quả cầu đỏ phía trước nhân vật.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Puppet } from '../js/rig.js';
+
+const q = new URLSearchParams(location.search);
+const id = q.get('m') || 'oldMan1';
+const GESTURES = ['point', 'reach', 'think', 'scratch', 'cheer', 'clap', 'facepalm', 'shrug'];
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#2a2a2a');
+scene.add(new THREE.HemisphereLight('#ffffff', '#666666', 2.2));
+const dl = new THREE.DirectionalLight('#ffffff', 1.5); dl.position.set(2, 3, 4); scene.add(dl);
+scene.add(new THREE.GridHelper(4, 20, '#666', '#3a3a3a'));
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.05, 50);
+camera.position.set(1.6, 1.4, 3.2);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.9, 0);
+
+const target = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshBasicMaterial({ color: '#f33' }));
+target.position.set(0.3, 0.75, 1.0);
+scene.add(target);
+
+const bar = document.getElementById('bar');
+const sel = document.createElement('select');
+for (let i = 1; i <= 5; i++) sel.add(new Option(`oldMan${i}`, `oldMan${i}`, false, `oldMan${i}` === id));
+sel.onchange = () => (location.search = `?m=${sel.value}`);
+bar.appendChild(sel);
+
+let puppet = null;
+for (const g of GESTURES) {
+  const b = document.createElement('button');
+  b.textContent = g;
+  b.onclick = () => puppet && puppet.play(g, { target: target.position, side: puppet.sideFor(target.position), duration: 2.5 });
+  bar.appendChild(b);
+}
+
+new GLTFLoader().load(`../../oldman/rigged/${id}.glb`, gltf => {
+  const m = gltf.scene;
+  const box = new THREE.Box3().setFromObject(m);
+  m.scale.setScalar(1.7 / (box.max.y - box.min.y));
+  m.position.y = -box.min.y * m.scale.y;
+  scene.add(m);
+  puppet = new Puppet(m);
+  puppet.look = target.position;
+  window.__puppet = puppet;
+});
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  target.position.x = Math.sin(clock.elapsedTime * 0.7) * 0.6;
+  if (puppet) puppet.update(dt);
+  controls.update();
+  renderer.render(scene, camera);
+});
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
